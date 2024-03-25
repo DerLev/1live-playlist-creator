@@ -1,0 +1,7 @@
+{
+  "uid": "FS-Doc UID (for convenience)",
+  "name": "Name of the category",
+  "createdBy": "UUID or just 'system'",
+  "dateCreated": "FS-Date object (serverTimestamp)",
+  "usersCanCreate": false
+}

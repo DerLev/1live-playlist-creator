@@ -1,0 +1,11 @@
+{
+  "uid": "FS-Doc UID (added for convenience)",
+  "title": "Title of the song",
+  "artists": ["An array of artists (FS-Ref to artist doc)"],
+  "released": "The release date of the song (as a FS-Date object)",
+  "releasePrecision": "Enum: year, month, day (as given by Spotify Web API)",
+  "firstSeen": "The first known time this song has been played on radio (FS-Date object)",
+  "spotifyTrackUri": "spotify:track:some_trak_id",
+  "duration": "Duration in mills (number)",
+  "explicit": false
+}

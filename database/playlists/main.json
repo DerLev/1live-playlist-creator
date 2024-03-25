@@ -1,0 +1,8 @@
+{
+  "uid": "FS-Doc UID (added for convenience)",
+  "name": "Name of the playlist (just the date and station - for future expansion)",
+  "date": "The playlist release date (FS-Date object)",
+  "createdBy": "A UUID or just 'system'",
+  "category": "FS-Ref of a category",
+  "lastUpdate": "FS-Date object"
+}
