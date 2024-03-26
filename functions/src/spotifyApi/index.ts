@@ -1,1 +1,1 @@
-export * from "./getUserToken";
+export * from "./updateWeeklyTop100";

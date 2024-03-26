@@ -17,3 +17,7 @@ export type ProjectCredentials = {
     }
   }
 }
+
+export type PlaylistsDocument = {
+  weeklyTop100: string
+}

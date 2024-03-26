@@ -19,4 +19,5 @@ export type TracksSubcollection = {
   spotifyTrackUri: string
   duration: number
   explicit: boolean
+  order?: number
 }

@@ -8,3 +8,4 @@ setGlobalOptions({
 });
 
 export * from "./playlistScraping/index";
+export * from "./spotifyApi/index";
