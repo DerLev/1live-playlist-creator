@@ -1,5 +1,4 @@
 {
-  "uid": "FS-Doc UID (added for convenience)",
   "title": "Title of the song",
   "artists": ["An array of artists (FS-Ref to artist doc)"],
   "released": "The release date of the song (as a FS-Date object)",
@@ -7,5 +6,7 @@
   "firstSeen": "The first known time this song has been played on radio (FS-Date object)",
   "spotifyTrackUri": "spotify:track:some_trak_id",
   "duration": "Duration in mills (number)",
-  "explicit": false
+  "explicit": false,
+  "searchString": "A lowercase alphanumeric version of the song's name",
+  "coverArt": [{ "url": "Url of the image", "height": 300, "width": 300 }]
 }

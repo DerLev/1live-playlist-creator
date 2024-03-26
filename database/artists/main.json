@@ -1,7 +1,7 @@
 {
-  "uid": "FS-Doc UID (added for convenience)",
   "name": "The name of the artist",
   "genres": ["Genres as returned by Spotify Web API"],
   "spotifyUri": "spotify:artist:some_artist_id",
-  "lastUpdated": "FS-Date object (used for adjusting genres)"
+  "lastUpdated": "FS-Date object (used for adjusting genres)",
+  "searchString": "A lowercase alphanumeric version of the artist's name"
 }

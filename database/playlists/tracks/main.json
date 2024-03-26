@@ -1,7 +1,6 @@
 {
-  "uid": "FS-Doc uid (convenience)",
   "trackUid": "FS-Doc uid from track",
-  "trackRef": "Track ref (FS-Ref)",
+  "ref": "Track ref (FS-Ref)",
   "addedAt": "FS-Date object",
   "title": "Track title",
   "artists": ["Array of artists"],
