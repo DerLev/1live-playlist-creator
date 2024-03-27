@@ -9,4 +9,4 @@ An application for creating playlists from the German radio station 1LIVE
 - [ ] Add a webapp (most likely React/Next.js) to give users more insights on the playlists (show gathered data)
 - [x] Add a job for filling up the backlog *(already done by hand)*
 - [ ] Expand to other 1LIVE plalists (Neu für den Sektor, DIGGI) *(added NfdS)*
-- [ ] Add function to replace tracks that have been wrongly mapped
+- [x] Add function to replace tracks that have been wrongly mapped

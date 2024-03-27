@@ -22,3 +22,7 @@ export type PlaylistsDocument = {
   weeklyTop100: string
   newReleases: string
 }
+
+export type ApiKeyDocument = {
+  invocationsKey: string
+}
