@@ -19,31 +19,19 @@ import {
 } from "../helpers/spotifyPlaylistHelpers";
 import * as logger from "firebase-functions/logger";
 
-export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
-  const spotifyApiToken = await getUserToken();
-
-  const playlistIdsDoc = (await db.collection("project").doc("playlists")
-    .withConverter(firestoreConverter<PlaylistsDocument>()).get()).data();
-  if (!playlistIdsDoc) {
-    throw new HttpsError(
-      "not-found",
-      "Playlists ID doc not found"
-    );
-  }
-
-  const currentDateTime = new Date();
-  const currentDayMills = Date.parse(
-    currentDateTime.getFullYear() + "-" +
-    (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
-    currentDateTime.getDate().toString().padStart(2, "0")
-  );
-  const aWeekAgo = new Date(currentDayMills - (1000 * 60 * 60 * 24 * 7));
-  logger.debug("A week ago object:", {aWeekAgo});
-
+const updateTop100Playlist = async (
+  spotifyApiToken: string,
+  categoryId: string,
+  resultCategoryId: string,
+  playlistId: string,
+  currentDateTime: Date,
+  aWeekAgo: Date,
+  titlePrefix: string
+) => {
   /* Category for daily playlists */
   const categoryRef = (await db.collection("categories")
     .withConverter(firestoreConverter<CategoriesCollection>())
-    .doc("zTTb3AvkFPz0aUuyo02c").get()).ref;
+    .doc(categoryId).get()).ref;
 
   const playlistsCollection = db.collection("playlists")
     .withConverter(firestoreConverter<PlaylistsCollection>());
@@ -91,32 +79,32 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
 
   const currentTracks = await listAllPlaylistTracks(
     spotifyApiToken,
-    playlistIdsDoc.weeklyTop100
+    playlistId
   );
   logger.debug("Currently in playlist:", {currentTracks});
 
   await removeTracksFromPlaylist(
     spotifyApiToken,
-    playlistIdsDoc.weeklyTop100,
+    playlistId,
     currentTracks.trackUris,
     currentTracks.snapshot_id
   );
 
   await addTracksToPlaylist(
     spotifyApiToken,
-    playlistIdsDoc.weeklyTop100,
+    playlistId,
     spotifyApiInput
   );
 
   const weeklyTop100CategoryRef = (await db.collection("categories")
     .withConverter(firestoreConverter<CategoriesCollection>())
-    .doc("DhfKWFXJrcoQA11lNkHB").get()).ref;
+    .doc(resultCategoryId).get()).ref;
 
   const playlistDoc = await playlistsCollection.add({
     category: weeklyTop100CategoryRef,
     createdBy: "system",
     lastUpdate: FieldValue.serverTimestamp(),
-    name: "1LIVE weekly Top 100 - " + currentDateTime.getFullYear() + "-" +
+    name: titlePrefix + " - " + currentDateTime.getFullYear() + "-" +
       (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
       currentDateTime.getDate().toString().padStart(2, "0"),
     date: FieldValue.serverTimestamp(),
@@ -137,6 +125,50 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
   });
 
   await Promise.all(tracksPlaylistPromises);
+};
+
+export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
+  const spotifyApiToken = await getUserToken();
+
+  const playlistIdsDoc = (await db.collection("project").doc("playlists")
+    .withConverter(firestoreConverter<PlaylistsDocument>()).get()).data();
+  if (!playlistIdsDoc) {
+    throw new HttpsError(
+      "not-found",
+      "Playlists ID doc not found"
+    );
+  }
+
+  const currentDateTime = new Date();
+  const currentDayMills = Date.parse(
+    currentDateTime.getFullYear() + "-" +
+    (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
+    currentDateTime.getDate().toString().padStart(2, "0")
+  );
+  const aWeekAgo = new Date(currentDayMills - (1000 * 60 * 60 * 24 * 7));
+  logger.debug("A week ago object:", {aWeekAgo});
+
+  /* Update 1LIVE Top 100s */
+  await updateTop100Playlist(
+    spotifyApiToken,
+    "zTTb3AvkFPz0aUuyo02c",
+    "DhfKWFXJrcoQA11lNkHB",
+    playlistIdsDoc.weeklyTop100,
+    currentDateTime,
+    aWeekAgo,
+    "1LIVE weekly Top 100"
+  );
+
+  /* Update 1LIVE DIGGI Top 100s */
+  await updateTop100Playlist(
+    spotifyApiToken,
+    "kVxWJAElj0IliGqSKdof",
+    "cnk2Iio9OEu6PO5Yw09Z",
+    playlistIdsDoc.diggiWeeklyTop100,
+    currentDateTime,
+    aWeekAgo,
+    "1LIVE DIGGI weekly Top 100"
+  );
 
   return;
 });

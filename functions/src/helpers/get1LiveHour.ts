@@ -1,14 +1,22 @@
 import {JSDOM} from "jsdom";
 
-const get1LiveHour = async (date: string, hour: number) => {
+const get1LiveHour = async (
+  date: string,
+  hour: number,
+  station: "1live" | "1liveDiggi" = "1live"
+) => {
   const body = new URLSearchParams();
   body.append("playlistSearch_date", date);
   body.append("playlistSearch_hours", hour.toString().padStart(2, "0"));
   body.append("playlistSearch_minutes", "30");
   body.append("submit", "suchen");
 
+  const requestUrl = station === "1live" ?
+    "https://www1.wdr.de/radio/1live/musik/playlist/index.jsp" :
+    "https://www1.wdr.de/radio/1live-diggi/onair/1live-diggi-playlist/index.jsp";
+
   const response = await fetch(
-    "https://www1.wdr.de/radio/1live/musik/playlist/index.jsp",
+    requestUrl,
     {
       method: "POST",
       body: body,

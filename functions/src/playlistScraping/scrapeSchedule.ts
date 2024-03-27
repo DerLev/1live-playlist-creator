@@ -14,25 +14,19 @@ import type {
 } from "../firestoreDocumentTypes/CategoriesCollection";
 import {getTimezoneOffset} from "date-fns-tz";
 
-/* NOTE: Scheduler triggers on UTC time */
-export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
-  /* Evaluate whether the function should trigger */
-  /* NOTE: needed for TZ's daylight savings time */
-  const centralEuropeOffset = getTimezoneOffset("Europe/Berlin", new Date());
-  const currentDateTime = new Date(Date.now() + centralEuropeOffset);
-  if (
-    !(7 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 19)
-  ) return;
-
-  /* If CET/CEST is between 7:00 and 19:00 continue */
-  const spotifyApiToken = await getClientToken();
-
-  const fetchFromHour = currentDateTime.getHours() - 1;
-  const fetchFromDay = currentDateTime.getFullYear() + "-" +
-    (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
-    currentDateTime.getDate().toString().padStart(2, "0");
-
-  const hourPlaylistResult = await get1LiveHour(fetchFromDay, fetchFromHour);
+const scrapePlaylist = async (
+  spotifyApiToken: string,
+  fetchFromDay: string,
+  fetchFromHour: number,
+  station: "1live" | "1liveDiggi",
+  resultCategory: string,
+  namePrefix: string
+) => {
+  const hourPlaylistResult = await get1LiveHour(
+    fetchFromDay,
+    fetchFromHour,
+    station
+  );
   const convertedResult = hourPlaylistResult.map(
     (track) => ({...track, played: Timestamp.fromDate(track.played)})
   );
@@ -48,7 +42,7 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
   /* Hard coded category */
   const categoryRef = (await db.collection("categories")
     .withConverter(firestoreConverter<CategoriesCollection>())
-    .doc("zTTb3AvkFPz0aUuyo02c").get()).ref;
+    .doc(resultCategory).get()).ref;
 
   /* Unix epoch mills for playlist creation date */
   const createdDateMills = Date.parse(fetchFromDay);
@@ -56,7 +50,7 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
   const playlistQuery = await playlistsCollection.where(
     "name",
     "==",
-    "1LIVE playlist - " + fetchFromDay
+    namePrefix + " - " + fetchFromDay
   ).where("createdBy", "==", "system").limit(1).get();
 
   let playlistDoc: FirebaseFirestore
@@ -68,7 +62,7 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
       category: categoryRef,
       createdBy: "system",
       lastUpdate: FieldValue.serverTimestamp(),
-      name: "1LIVE playlist - " + fetchFromDay,
+      name: namePrefix + " - " + fetchFromDay,
       date: Timestamp.fromMillis(createdDateMills),
     });
   } else {
@@ -88,6 +82,45 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
   });
 
   await Promise.all(tracksPromises);
+};
+
+/* NOTE: Scheduler triggers on UTC time */
+export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
+  /* Evaluate whether the function should trigger */
+  /* NOTE: needed for TZ's daylight savings time */
+  const centralEuropeOffset = getTimezoneOffset("Europe/Berlin", new Date());
+  const currentDateTime = new Date(Date.now() + centralEuropeOffset);
+  if (
+    !(7 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 19)
+  ) return;
+
+  /* If CET/CEST is between 7:00 and 19:00 continue */
+  const spotifyApiToken = await getClientToken();
+
+  const fetchFromHour = currentDateTime.getHours() - 1;
+  const fetchFromDay = currentDateTime.getFullYear() + "-" +
+    (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
+    currentDateTime.getDate().toString().padStart(2, "0");
+
+  /* Scrape from 1LIVE */
+  await scrapePlaylist(
+    spotifyApiToken,
+    fetchFromDay,
+    fetchFromHour,
+    "1live",
+    "zTTb3AvkFPz0aUuyo02c",
+    "1LIVE playlist"
+  );
+
+  /* Scrape from 1LIVE DIGGI */
+  await scrapePlaylist(
+    spotifyApiToken,
+    fetchFromDay,
+    fetchFromHour,
+    "1liveDiggi",
+    "kVxWJAElj0IliGqSKdof",
+    "1LIVE DIGGI playlist"
+  );
 
   return;
 });

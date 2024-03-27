@@ -13,31 +13,39 @@ import type {
 } from "../firestoreDocumentTypes/CategoriesCollection";
 import {HttpsError, onRequest} from "firebase-functions/v2/https";
 import onlyAllowMethods from "../helpers/onlyAllowMethods";
+import validateAuthToken from "../helpers/validateAuthToken";
 
 export const scrapeBackfill = onRequest(async (req, res) => {
   onlyAllowMethods(req, res, ["POST"]);
 
-  const queryHour = req.query.hour?.toString();
-  if (!queryHour?.match(/\d{2}/) || Number.isNaN(Number(queryHour))) {
-    res.status(400).json({code: 400, message: "hour must be 2 digit integer"});
+  await validateAuthToken(req, res);
+
+  const queryDate = req.query.date?.toString();
+  if (!queryDate?.match(/\d{4}-\d{2}-\d{2}/)) {
+    res.status(400).json({code: 400, message: "Date must be a valid date"});
     throw new HttpsError(
       "invalid-argument",
-      "Hour must be a valid 2 digit integer"
+      "Date must be a valid a valid date"
     );
   }
 
-  const currentDateTime = new Date();
-
-  /* If CET/CEST is between 7:00 and 20:00 continue */
   const spotifyApiToken = await getClientToken();
 
-  const fetchFromHour = Number(queryHour);
-  const fetchFromDay = currentDateTime.getFullYear() + "-" +
-    (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
-    currentDateTime.getDate().toString().padStart(2, "0");
+  const fetchFromDay = queryDate;
 
-  const hourPlaylistResult = await get1LiveHour(fetchFromDay, fetchFromHour);
-  const convertedResult = hourPlaylistResult.map(
+  const stationPlaylistResultPromises = Array.from(Array(13).keys())
+    .map(async (_, index) => {
+      return await get1LiveHour(fetchFromDay, index + 6, "1liveDiggi")
+        .catch(() => undefined);
+    });
+  const stationPlaylistResult = (await Promise
+    .all(stationPlaylistResultPromises)).flat()
+    .filter((item) => item !== undefined) as {
+      title: string
+      artist: string
+      played: Date
+    }[];
+  const convertedResult = stationPlaylistResult.map(
     (track) => ({...track, played: Timestamp.fromDate(track.played)})
   );
 
@@ -52,32 +60,33 @@ export const scrapeBackfill = onRequest(async (req, res) => {
   /* Hard coded category */
   const categoryRef = (await db.collection("categories")
     .withConverter(firestoreConverter<CategoriesCollection>())
-    .doc("zTTb3AvkFPz0aUuyo02c").get()).ref;
+    .doc("kVxWJAElj0IliGqSKdof").get()).ref;
 
   /* Unix epoch mills for playlist creation date */
   const createdDateMills = Date.parse(fetchFromDay);
 
-  const playlistQuery = await playlistsCollection.where(
-    "name",
-    "==",
-    "1LIVE playlist - " + fetchFromDay
-  ).where("createdBy", "==", "system").limit(1).get();
+  // const playlistQuery = await playlistsCollection.where(
+  //   "name",
+  //   "==",
+  //   "1LIVE DIGGI playlist - " + fetchFromDay
+  // ).where("createdBy", "==", "system").where("category", "==", categoryRef)
+  //   .limit(1).get();
 
-  let playlistDoc: FirebaseFirestore
-    .DocumentReference<PlaylistsCollection> | undefined = undefined;
+  // let playlistDoc: FirebaseFirestore
+  //   .DocumentReference<PlaylistsCollection> | undefined = undefined;
 
   /* Create the playlist doc if it does not exist */
-  if (playlistQuery.empty) {
-    playlistDoc = await playlistsCollection.add({
-      category: categoryRef,
-      createdBy: "system",
-      lastUpdate: FieldValue.serverTimestamp(),
-      name: "1LIVE playlist - " + fetchFromDay,
-      date: Timestamp.fromMillis(createdDateMills),
-    });
-  } else {
-    playlistDoc = playlistQuery.docs[0].ref;
-  }
+  // if (playlistQuery.empty) {
+  const playlistDoc = await playlistsCollection.add({
+    category: categoryRef,
+    createdBy: "system",
+    lastUpdate: FieldValue.serverTimestamp(),
+    name: "1LIVE DIGGI playlist - " + fetchFromDay,
+    date: Timestamp.fromMillis(createdDateMills),
+  });
+  // } else {
+  //   playlistDoc = playlistQuery.docs[0].ref;
+  // }
 
   /* Add the tracks to the playlist */
   const tracksSubcollection = playlistDoc.collection("tracks")
@@ -89,5 +98,5 @@ export const scrapeBackfill = onRequest(async (req, res) => {
 
   await Promise.all(tracksPromises);
 
-  res.json({code: 200, message: "Backfill completed"});
+  res.json({code: 200, message: "Backfill completed", date: queryDate});
 });

@@ -21,6 +21,7 @@ export type ProjectCredentials = {
 export type PlaylistsDocument = {
   weeklyTop100: string
   newReleases: string
+  diggiWeeklyTop100: string
 }
 
 export type ApiKeyDocument = {
