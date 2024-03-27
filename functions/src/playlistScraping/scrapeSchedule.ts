@@ -21,10 +21,10 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
   const centralEuropeOffset = getTimezoneOffset("Europe/Berlin", new Date());
   const currentDateTime = new Date(Date.now() + centralEuropeOffset);
   if (
-    !(6 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 19)
+    !(7 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 19)
   ) return;
 
-  /* If CET/CEST is between 6:00 and 19:00 continue */
+  /* If CET/CEST is between 7:00 and 19:00 continue */
   const spotifyApiToken = await getClientToken();
 
   const fetchFromHour = currentDateTime.getHours() - 1;
