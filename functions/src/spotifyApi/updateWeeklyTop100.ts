@@ -4,7 +4,6 @@ import {db} from "../helpers/firebase";
 import firestoreConverter from "../helpers/firestoreConverter";
 import {PlaylistsDocument} from "../firestoreDocumentTypes/ProjectCredentials";
 import {HttpsError} from "firebase-functions/v2/https";
-import {SpotifyError} from "../firestoreDocumentTypes/SpotifyApi";
 import {
   PlaylistsCollection,
   TracksSubcollection,
@@ -14,9 +13,11 @@ import {
 } from "../firestoreDocumentTypes/CategoriesCollection";
 import {FieldValue} from "firebase-admin/firestore";
 import {
+  addTracksToPlaylist,
   listAllPlaylistTracks,
   removeTracksFromPlaylist,
 } from "../helpers/spotifyPlaylistHelpers";
+import * as logger from "firebase-functions/logger";
 
 export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
   const spotifyApiToken = await getUserToken();
@@ -36,7 +37,8 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
     (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
     currentDateTime.getDate().toString().padStart(2, "0")
   );
-  const aWeekAgo = new Date(currentDayMills - (1000 * 60 * 24 * 7));
+  const aWeekAgo = new Date(currentDayMills - (1000 * 60 * 60 * 24 * 7));
+  logger.debug("A week ago object:", {aWeekAgo});
 
   /* Category for daily playlists */
   const categoryRef = (await db.collection("categories")
@@ -46,9 +48,11 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
   const playlistsCollection = db.collection("playlists")
     .withConverter(firestoreConverter<PlaylistsCollection>());
 
+  /* Get all documents from the past 7 days */
   const playlistsQuery = (await playlistsCollection
     .where("date", ">=", aWeekAgo).where("category", "==", categoryRef)
-    .limit(7).get()).docs;
+    .orderBy("date", "desc").limit(7).get()).docs;
+  logger.debug("Playlist query results:", {playlistsQuery});
 
   const tracksPromises = playlistsQuery.map(async (playlist) => {
     const tracksSubcollection = playlist.ref.collection("tracks")
@@ -60,8 +64,8 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
 
   const tracks = (await Promise.all(tracksPromises)).flat();
 
-  type rankedTracks = ({ timesPlayed: number } & TracksSubcollection)[];
-  const rankedTracks: rankedTracks = [];
+  type rankedTracksType = ({ timesPlayed: number } & TracksSubcollection)[];
+  const rankedTracks: rankedTracksType = [];
 
   tracks.forEach((track) => {
     const inArrayIndex = rankedTracks
@@ -77,14 +81,19 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
     }
   });
 
-  const playlistNewTracks = rankedTracks.splice(0, 100);
+  const playlistNewTracks = rankedTracks
+    .sort((a, b) => b.timesPlayed - a.timesPlayed)
+    .splice(0, 100);
   const spotifyApiInput = playlistNewTracks
     .map((track) => track.spotifyTrackUri);
+
+  logger.debug("Playlist ranked tracks:", {playlistNewTracks});
 
   const currentTracks = await listAllPlaylistTracks(
     spotifyApiToken,
     playlistIdsDoc.weeklyTop100
   );
+  logger.debug("Currently in playlist:", {currentTracks});
 
   await removeTracksFromPlaylist(
     spotifyApiToken,
@@ -93,28 +102,11 @@ export const updateWeeklyTop100 = onSchedule("every day 01:00", async () => {
     currentTracks.snapshot_id
   );
 
-  const result = await fetch(
-    "https://api.spotify.com/v1/playlists/" + playlistIdsDoc.weeklyTop100 +
-    "/tracks", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + spotifyApiToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        uris: spotifyApiInput,
-      }),
-    }
+  await addTracksToPlaylist(
+    spotifyApiToken,
+    playlistIdsDoc.weeklyTop100,
+    spotifyApiInput
   );
-
-  if (!result.ok) {
-    const apiError = await result.json() as SpotifyError;
-    throw new HttpsError(
-      "internal",
-      "Spotify API errored: " + apiError.error.status + ": " +
-      apiError.error.message
-    );
-  }
 
   const weeklyTop100CategoryRef = (await db.collection("categories")
     .withConverter(firestoreConverter<CategoriesCollection>())

@@ -1,5 +1,6 @@
 import {HttpsError} from "firebase-functions/v2/https";
 import type {
+  AddPlaylistItems,
   GetPlaylist,
   GetPlaylistItems,
   RemovePlaylistItems,
@@ -34,7 +35,7 @@ export const listAllPlaylistTracks = async (
     );
   }
 
-  if (firstGetResult.tracks.limit === firstGetResult.tracks.total) {
+  if (firstGetResult.tracks.total <= firstGetResult.tracks.limit) {
     return {
       trackUris: firstGetResult.tracks.items.map((track) => track.track.uri),
       snapshot_id: firstGetResult.snapshot_id,
@@ -49,7 +50,7 @@ export const listAllPlaylistTracks = async (
 
   const requestsPromises = Array.from(Array(requestsToMake).keys()).map(
     async (_, index) => {
-      const currentOffset = index + 1;
+      const currentOffset = index * pageSize;
 
       const result = await fetch(
         "https://api.spotify.com/v1/playlists/" + playlistId +
@@ -98,6 +99,8 @@ export const removeTracksFromPlaylist = async (
   const requestSize = 100;
   const amountOfRequests = Math.ceil(trackUris.length / requestSize);
 
+  let lastSnapshot = snapshotId;
+
   for (let i = 0; i < amountOfRequests; i++) {
     const trackUrisChunk = trackUris.slice(
       i * requestSize,
@@ -132,7 +135,62 @@ export const removeTracksFromPlaylist = async (
         result.error.message
       );
     }
+
+    lastSnapshot = result.snapshot_id;
   }
 
-  return snapshotId;
+  return lastSnapshot;
+};
+
+/**
+ * Adds Tracks to a Spotify playlist
+ * @param spotifyAccessToken The access token for the Spotify Web API
+ * @param playlistId The Id of the playlist to add tracks to
+ * @param trackUris The track uris to add
+ * @returns The resulting snapshot Id
+ */
+export const addTracksToPlaylist = async (
+  spotifyAccessToken: string,
+  playlistId: string,
+  trackUris: string[]
+) => {
+  const requestSize = 100;
+  const numberOfRequests = Math.ceil(trackUris.length / requestSize);
+
+  let lastSnapshot = "";
+
+  for (let i = 0; i < numberOfRequests; i++) {
+    const requestUrisChunk = trackUris.slice(
+      i * requestSize,
+      i * requestSize + requestSize
+    );
+
+    const result = await fetch(
+      "https://api.spotify.com/v1/playlists/" + playlistId +
+      "/tracks", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + spotifyAccessToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uris: requestUrisChunk,
+        }),
+      }
+    );
+
+    if (!result.ok) {
+      const apiError = await result.json() as SpotifyError;
+      throw new HttpsError(
+        "internal",
+        "Spotify API errored: " + apiError.error.status + ": " +
+        apiError.error.message
+      );
+    }
+
+    const apiResponse = await result.json() as AddPlaylistItems;
+    lastSnapshot = apiResponse.snapshot_id;
+  }
+
+  return lastSnapshot;
 };

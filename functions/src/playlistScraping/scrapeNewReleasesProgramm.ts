@@ -15,10 +15,10 @@ import get1LiveNewReleases from "../helpers/get1LiveNewReleases";
 import {PlaylistsDocument} from "../firestoreDocumentTypes/ProjectCredentials";
 import {HttpsError} from "firebase-functions/v2/https";
 import {
+  addTracksToPlaylist,
   listAllPlaylistTracks,
   removeTracksFromPlaylist,
 } from "../helpers/spotifyPlaylistHelpers";
-import {SpotifyError} from "../firestoreDocumentTypes/SpotifyApi";
 
 export const scrapeNewReleasesProgramm = onSchedule("0 4 * * 1", async () => {
   const spotifyApiToken = await getUserToken();
@@ -87,28 +87,11 @@ export const scrapeNewReleasesProgramm = onSchedule("0 4 * * 1", async () => {
 
   const spotifyApiInput = playlistTracks.map((track) => track.spotifyTrackUri);
 
-  const result = await fetch(
-    "https://api.spotify.com/v1/playlists/" + playlistIdsDoc.newReleases +
-    "/tracks", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + spotifyApiToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        uris: spotifyApiInput,
-      }),
-    }
+  await addTracksToPlaylist(
+    spotifyApiToken,
+    playlistIdsDoc.newReleases,
+    spotifyApiInput
   );
-
-  if (!result.ok) {
-    const apiError = await result.json() as SpotifyError;
-    throw new HttpsError(
-      "internal",
-      "Spotify API errored: " + apiError.error.status + ": " +
-      apiError.error.message
-    );
-  }
 
   return;
 });
