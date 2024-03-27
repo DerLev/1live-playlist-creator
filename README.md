@@ -1,4 +1,7 @@
 # 1live-playlist-creator
+
+[![CI/CD](https://github.com/DerLev/1live-playlist-creator/actions/workflows/integration-deployment.yml/badge.svg?branch=main&event=push)](https://github.com/DerLev/1live-playlist-creator/actions/workflows/integration-deployment.yml)
+
 An application for creating playlists from the German radio station 1LIVE
 
 ## Roadmap
