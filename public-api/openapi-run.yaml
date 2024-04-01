@@ -1,0 +1,108 @@
+swagger: '2.0'
+info:
+  title: 1LIVE playlists public API
+  version: 1.0.0
+host: api.playlists.derlev.xyz
+schemes:
+  - https
+produces:
+  - application/json
+definitions:
+  Error:
+    type: object
+    properties: 
+      code:
+        type: integer
+      message:
+        type: string
+x-google-management:
+  metrics:
+    - name: "read-requests"
+      displayName: "read requests"
+      valueType: INT64
+      metricKind: DELTA
+  quota:
+    limits:
+      - name: "read-limit"
+        metric: "read-requests"
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 3
+paths:
+  /daily-playlist/{date}:
+    get:
+      summary: Get a specific days station playlist
+      operationId: getDatePlaylist
+      x-google-backend:
+        address: https://getdailyplaylist-twiavfpdza-ew.a.run.app
+        protocol: h2
+      x-google-quota:
+        metricCosts:
+          read-requests: 1
+      parameters:
+        - in: path
+          name: date
+          type: string
+          pattern: ^(\d{4}\-\d{2}\-\d{2})|(today)$
+          required: true
+        - in: query
+          name: station
+          type: string
+          enum: ['1live', '1liveDiggi']
+      responses:
+        '200':
+          description: Returns the metadata of the playlist and an unordered list of tracks
+          schema:
+            type: object
+            properties: 
+              name:
+                type: string
+                example: "1LIVE daily playlist - 2024-03-29"
+              date:
+                type: string
+                format: date-time
+                example: 2024-03-29T00:00:00.000Z
+              createdBy:
+                type: string
+                example: system
+              category:
+                type: string
+                example: zTTb3AvkFPz0aUuyo02c
+                description: The category id of the playlist
+              lastUpdate:
+                type: string
+                format: date-time
+                example: 2024-03-29T00:00:00.000Z
+              tracks:
+                type: array
+                items: 
+                  type: object
+                  properties: 
+                    title:
+                      type: string
+                      example: "Stumblin' In"
+                    artists:
+                      type: array
+                      items:
+                        type: string
+                        example: "CYRIL"
+                    addedAt:
+                      type: string
+                      format: date-time
+                      example: 2024-03-29T01:00:09.000Z
+                    trackId:
+                      type: string
+                      example: 3RE6sU3OUVTKT1p1YcjJ
+                    spotifyTrackUri:
+                      type: string
+                      example: spotify:track:0h3Xy4V4apMraB5NuM8U7Z
+                    duration:
+                      type: integer
+                      example: 213363
+                    explicit:
+                      type: boolean
+                      example: false
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
