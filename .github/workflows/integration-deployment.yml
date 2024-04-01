@@ -37,7 +37,6 @@ jobs:
             api:
               - 'public-api/**'
               - '!(public-api)/**/*.md'
-              - '.github/workflows/integration-deployment.yml'
   
   # START: Cloud Functions
   func-lint-typecheck:
@@ -103,7 +102,7 @@ jobs:
         with:
           args: >-
             -repo=${{ env.API_ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.API_ARTIFACT_REGISTRY }}/${{ env.API_ARTIFACT_REGISTRY_CONTAINER_NAME }}
-            -keep=4
+            -keep=3
             -tag-filter-any=.*
 
   api-delete-outdated-cr:
@@ -172,15 +171,15 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      - name: Deploy new Cloud Endpoints revision
+      - name: Deploy new Cloud Endpoints Revision
         run: 'gcloud endpoints services deploy openapi-run.yaml'
-      - name: Get latest revision config id
+      - name: Get latest Revision Config ID
         id: current-config-id
         run: echo "config-id=$(gcloud endpoints configs list --service=${{ env.API_ENDPOINTS_SERVICE }} | awk 'NR==2 {print $1}')" >> $GITHUB_OUTPUT
-      - name: Download ESPv2 config
+      - name: Download ESPv2 Config
         id: current-esp-config
         run: 'curl -o "service.json" -H "Authorization: Bearer ${{ steps.auth.outputs.access_token }}" "https://servicemanagement.googleapis.com/v1/services/${{ env.API_ENDPOINTS_SERVICE }}/configs/${{ steps.current-config-id.outputs.config-id }}?view=FULL"'
-      - name: Create Dockerfile for ESPv2 container
+      - name: Create Dockerfile for ESPv2 Container
         run: |
           cat <<EOF > Dockerfile
           FROM ${{ env.API_ESP_BASE_IMAGE }}
