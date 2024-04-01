@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "einslive-playlist-creator"
+  },
+  "targets": {
+    "einslive-playlist-creator": {
+      "hosting": {
+        "default": [
+          "einslive-playlist-creator"
+        ]
+      }
+    }
   }
 }

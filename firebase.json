@@ -16,5 +16,18 @@
       ],
       "runtime": "nodejs20"
     }
-  ]
+  ],
+  "hosting": [{
+    "target": "default",
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "region": "europe-west1",
+          "serviceId": "frontend",
+          "pinTag": true
+        }
+      }
+    ]
+  }]
 }
