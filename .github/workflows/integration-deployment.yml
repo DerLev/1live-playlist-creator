@@ -150,6 +150,7 @@ jobs:
     defaults:
       run:
         working-directory: public-api
+    environment: "API: production"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -182,7 +183,7 @@ jobs:
       - name: Create Dockerfile for ESPv2 container
         run: |
           cat <<EOF > Dockerfile
-          FROM ${BASE_IMAGE}
+          FROM ${{ env.API_ESP_BASE_IMAGE }}
           
           USER root
           ENV ENDPOINTS_SERVICE_PATH /etc/endpoints/service.json
