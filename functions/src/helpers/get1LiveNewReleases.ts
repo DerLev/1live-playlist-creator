@@ -3,7 +3,7 @@ import {JSDOM} from "jsdom";
 const get1LiveNewReleases = async () => {
   const response = await fetch(
     "https://www1.wdr.de/radio/1live/musik/neu-fuer-den-sektor/" +
-    "nfds-sonntag-mit-philipp-isterewicz100.html",
+    "nfds-sonntag-mit-philipp-isterewicz100.jsp",
     {
       method: "GET",
     }

@@ -20,7 +20,7 @@ import {
   removeTracksFromPlaylist,
 } from "../helpers/spotifyPlaylistHelpers";
 
-export const scrapeNewReleasesProgramm = onSchedule("0 4 * * 1", async () => {
+export const scrapeNewReleasesProgramm = onSchedule("0 12 * * 1", async () => {
   const spotifyApiToken = await getUserToken();
 
   const playlistIdsDoc = (await db.collection("project").doc("playlists")
