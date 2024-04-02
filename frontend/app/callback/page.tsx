@@ -10,7 +10,7 @@ import { signInWithCustomToken } from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { HiOutlineExclamationTriangle } from 'react-icons/hi2'
 import { useAuth, useFunctions } from 'reactfire'
 
@@ -33,7 +33,7 @@ const humanReadableCallbackErrors = (cberror: string) => {
   }
 }
 
-const CallbackPage = () => {
+const Callback = () => {
   const queryParams = useSearchParams()
   const functions = useFunctions()
   const auth = useAuth()
@@ -91,8 +91,10 @@ const CallbackPage = () => {
       deleteLoginNonce()
     } else if (queryParams.get('code') && queryParams.get('state')) {
       setLoginFuncCall(true)
+    } else if (queryParams.size < 1) {
+      router.push('/')
     }
-  }, [queryParams, deleteLoginNonce, loginWithCode])
+  }, [queryParams, deleteLoginNonce, loginWithCode, router])
 
   useEffect(() => {
     if (loginFuncCall) {
@@ -132,5 +134,11 @@ const CallbackPage = () => {
     )
   }
 }
+
+const CallbackPage = () => (
+  <Suspense>
+    <Callback />
+  </Suspense>
+)
 
 export default CallbackPage
