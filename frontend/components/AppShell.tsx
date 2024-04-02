@@ -1,66 +1,35 @@
 'use client'
 
-import {
-  AppShell as MAppShell,
-  AppShellMain,
-  AppShellHeader,
-  Group,
-  Title,
-  Burger,
-  AppShellNavbar,
-  AppShellSection,
-  ScrollArea,
-  NavLink,
-  Anchor,
-} from '@mantine/core'
-import Link from 'next/link'
+import { AppShell as MAppShell, AppShellMain } from '@mantine/core'
 import { usePathname } from 'next/navigation'
-import { PropsWithChildren, useState } from 'react'
-import { HiOutlineHomeModern } from 'react-icons/hi2'
-
-interface HeaderProps {
-  navOpen: boolean
-  toggleNavOpen: () => void
-}
-
-const Header = ({ navOpen, toggleNavOpen }: HeaderProps) => (
-  <AppShellHeader px={'md'}>
-    <Group justify="space-between" h={'100%'}>
-      <Group gap={'xs'}>
-        <Burger
-          opened={navOpen}
-          size={'sm'}
-          display={{ base: 'block', sm: 'none' }}
-          onClick={() => toggleNavOpen()}
-        />
-        <Anchor component={Link} href="/" c="dark.0">
-          <Title size="h2">1LIVE playlist creator</Title>
-        </Anchor>
-      </Group>
-    </Group>
-  </AppShellHeader>
-)
-
-const Navbar = () => {
-  const pathname = usePathname()
-
-  return (
-    <AppShellNavbar p="xs">
-      <AppShellSection grow component={ScrollArea} scrollbarSize={6} h={'100%'}>
-        <NavLink
-          label="Home"
-          component={Link}
-          href="/"
-          leftSection={<HiOutlineHomeModern />}
-          active={pathname === '/'}
-        />
-      </AppShellSection>
-    </AppShellNavbar>
-  )
-}
+import { PropsWithChildren, useEffect, useMemo, useState } from 'react'
+import AppShellHeader from './AppShellHeader'
+import AppShellNavbar from './AppShellNavbar'
 
 const AppShell = ({ children }: PropsWithChildren) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [desktopNavOpen, setDesktopNavOpen] = useState(true)
+
+  const sectionsWithoutNavbar = useMemo(() => ['/auth', '/callback'], [])
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const matchedPaths = sectionsWithoutNavbar.map((item) => {
+      return pathname.startsWith(item)
+    })
+
+    if (matchedPaths.some((item) => item)) {
+      setDesktopNavOpen(false)
+    } else {
+      setDesktopNavOpen(true)
+    }
+  }, [pathname, sectionsWithoutNavbar])
+
+  useEffect(() => {
+    if (pathname) {
+      setMobileNavOpen(false)
+    }
+  }, [pathname])
 
   return (
     <MAppShell
@@ -76,14 +45,15 @@ const AppShell = ({ children }: PropsWithChildren) => {
       navbar={{
         width: 300,
         breakpoint: 'sm',
-        collapsed: { mobile: !mobileNavOpen },
+        collapsed: { mobile: !mobileNavOpen, desktop: !desktopNavOpen },
       }}
+      transitionDuration={0}
     >
-      <Header
+      <AppShellHeader
         navOpen={mobileNavOpen}
         toggleNavOpen={() => setMobileNavOpen(!mobileNavOpen)}
       />
-      <Navbar />
+      <AppShellNavbar />
       <AppShellMain>{children}</AppShellMain>
     </MAppShell>
   )

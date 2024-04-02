@@ -3,8 +3,16 @@ import {ProjectCredentials} from "../firestoreDocumentTypes/ProjectCredentials";
 import {db} from "./firebase";
 import firestoreConverter from "./firestoreConverter";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {UserTokensDoc} from "../firestoreDocumentTypes/UsersCollection";
 
 const getClientToken = async () => {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  if (!clientId?.length || !clientSecret?.length) {
+    throw new Error("Client ID and/or Client Secret are not in ENV");
+  }
+
   const credDoc = db.collection("project")
     .withConverter(firestoreConverter<ProjectCredentials>())
     .doc("credentials");
@@ -24,8 +32,6 @@ const getClientToken = async () => {
     return creds.spotify.clientCredentials.accessToken;
   }
 
-  const clientId = creds.spotify.application.clientId;
-  const clientSecret = creds.spotify.application.clientSecret;
   const authHeader = Buffer.from(clientId + ":" + clientSecret)
     .toString("base64");
 
@@ -58,33 +64,36 @@ const getClientToken = async () => {
 };
 
 const getUserToken = async () => {
-  const credDoc = db.collection("project")
-    .withConverter(firestoreConverter<ProjectCredentials>())
-    .doc("credentials");
-  const creds = (await credDoc.get()).data();
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-  if (!creds) {
+  if (!clientId?.length || !clientSecret?.length) {
+    throw new Error("Client ID and/or Client Secret are not in ENV");
+  }
+
+  const tokenDoc = db.collection("users").doc("levin-111").collection("system")
+    .doc("tokens").withConverter(firestoreConverter<UserTokensDoc>());
+  const tokens = await (await tokenDoc.get()).data();
+
+  if (!tokens) {
     throw new HttpsError(
       "failed-precondition",
-      "Credentials doc does not exist"
+      "Tokens doc does not exist"
     );
   }
 
-  const currentTokenValidUntil = creds.spotify.playlistUser.tokenValidUntil
-    .toMillis();
+  const currentTokenValidUntil = tokens.tokenValidUntil.toMillis();
   const currentDateTime = new Date().getTime();
   if ((currentTokenValidUntil - currentDateTime) > (1000 * 60)) {
-    return creds.spotify.playlistUser.accessToken;
+    return tokens.accessToken;
   }
 
-  const clientId = creds.spotify.application.clientId;
-  const clientSecret = creds.spotify.application.clientSecret;
   const authHeader = Buffer.from(clientId + ":" + clientSecret)
     .toString("base64");
 
   const formDataBody = new URLSearchParams();
   formDataBody.append("grant_type", "refresh_token");
-  formDataBody.append("refresh_token", creds.spotify.playlistUser.refreshToken);
+  formDataBody.append("refresh_token", tokens.refreshToken);
 
   const result = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -101,13 +110,11 @@ const getUserToken = async () => {
 
   const tokenExpiresIn = new Date().getTime() + (1000 * 60 * 60);
 
-  await credDoc.update({
-    "spotify.playlistUser": {
-      accessToken: result.access_token,
-      refreshToken: creds.spotify.playlistUser.refreshToken,
-      tokenCreatedAt: FieldValue.serverTimestamp(),
-      tokenValidUntil: Timestamp.fromMillis(tokenExpiresIn),
-    },
+  await tokenDoc.update({
+    accessToken: result.access_token,
+    refreshToken: tokens.refreshToken,
+    tokenCreatedAt: FieldValue.serverTimestamp(),
+    tokenValidUntil: Timestamp.fromMillis(tokenExpiresIn),
   });
 
   return result.access_token;

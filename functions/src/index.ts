@@ -5,10 +5,20 @@ setGlobalOptions({
   memory: "256MiB",
   region: "europe-west1",
   timeoutSeconds: 30,
+  secrets: ["SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET"],
+});
+
+export * from "./scheduled/index";
+
+setGlobalOptions({
+  maxInstances: 1,
+  memory: "256MiB",
+  region: "europe-west1",
+  timeoutSeconds: 30,
 });
 
 export * from "./playlistScraping/index";
-export * from "./spotifyApi/index";
+export * from "./userAuth/index";
 
 /* Public API functions */
 

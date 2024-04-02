@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ColorSchemeScript, MantineProvider } from '@mantine/core'
 import '@mantine/core/styles.css'
 import AppShell from '@/components/AppShell'
+import FirebaseSDKProvider from '@/components/FirebaseSDKProvider'
 
 export const metadata: Metadata = {
   title: '1LIVE playlist creator',
@@ -20,9 +21,11 @@ export default function RootLayout({
         <ColorSchemeScript defaultColorScheme="dark" />
       </head>
       <body>
-        <MantineProvider defaultColorScheme="dark">
-          <AppShell>{children}</AppShell>
-        </MantineProvider>
+        <FirebaseSDKProvider>
+          <MantineProvider defaultColorScheme="dark">
+            <AppShell>{children}</AppShell>
+          </MantineProvider>
+        </FirebaseSDKProvider>
       </body>
     </html>
   )
