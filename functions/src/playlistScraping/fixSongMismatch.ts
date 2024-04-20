@@ -137,10 +137,6 @@ export const fixSongMismatch = onRequest(
         releasePrecision: result.album.release_date_precision,
         spotifyTrackUri: result.uri,
         artists: artistRefs,
-        searchString: generateSearchString(
-          result.name,
-          artistNames.join(" & ")
-        ),
       });
 
       const fixAffectedTracksPromsies = affectedTracks.map(async (track) => {

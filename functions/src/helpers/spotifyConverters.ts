@@ -71,7 +71,7 @@ export const convertStationPlaylist = async (
     queryParams.append("q", `${srcapedData.title} - ${firstArtist}`);
     queryParams.append("type", "track");
     queryParams.append("market", "DE");
-    queryParams.append("limit", "1");
+    queryParams.append("limit", "5");
     queryParams.append("offset", "0");
 
     /* Calling Spotify API */
