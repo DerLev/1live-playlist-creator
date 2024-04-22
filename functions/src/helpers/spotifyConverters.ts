@@ -90,12 +90,15 @@ export const convertStationPlaylist = async (
       );
     }
 
+    const filterNulledItems = result.tracks.items
+      .filter((item) => item !== null);
+
     const songsCollection = db.collection("songs")
       .withConverter(firestoreConverter<SongsCollection>());
 
     /* Retry track search -> get track by Spotify URI */
     const trackByURI = await songsCollection
-      .where("spotifyTrackUri", "==", result.tracks.items[0].uri)
+      .where("spotifyTrackUri", "==", filterNulledItems[0].uri)
       .limit(1).get();
 
     /* If track was found... */
