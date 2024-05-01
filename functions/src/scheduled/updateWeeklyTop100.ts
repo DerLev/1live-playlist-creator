@@ -87,7 +87,10 @@ const updateTop100Playlist = async (
     spotifyApiToken,
     playlistId,
     currentTracks.trackUris,
-    currentTracks.snapshot_id
+    /* Removing Snapshot IDs because API can return IDs that are not valid 🤷 */
+    /* And because we are instantly deleting items */
+    /* this will probably not affect anything */
+    // currentTracks.snapshot_id
   );
 
   await addTracksToPlaylist(
