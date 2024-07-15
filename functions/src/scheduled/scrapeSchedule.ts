@@ -13,6 +13,7 @@ import type {
   CategoriesCollection,
 } from "../firestoreDocumentTypes/CategoriesCollection";
 import {getTimezoneOffset} from "date-fns-tz";
+import * as logger from "firebase-functions/logger";
 
 const scrapePlaylist = async (
   spotifyApiToken: string,
@@ -102,25 +103,35 @@ export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
     (currentDateTime.getMonth() + 1).toString().padStart(2, "0") + "-" +
     currentDateTime.getDate().toString().padStart(2, "0");
 
-  /* Scrape from 1LIVE */
-  await scrapePlaylist(
-    spotifyApiToken,
-    fetchFromDay,
-    fetchFromHour,
-    "1live",
-    "zTTb3AvkFPz0aUuyo02c",
-    "1LIVE playlist"
-  );
+  try {
+    /* Scrape from 1LIVE */
+    await scrapePlaylist(
+      spotifyApiToken,
+      fetchFromDay,
+      fetchFromHour,
+      "1live",
+      "zTTb3AvkFPz0aUuyo02c",
+      "1LIVE playlist"
+    );
+  } catch (err) {
+    logger.error("Unexpected Error occurred at 1LIVE playlist scrape: " + err);
+  }
 
-  /* Scrape from 1LIVE DIGGI */
-  await scrapePlaylist(
-    spotifyApiToken,
-    fetchFromDay,
-    fetchFromHour,
-    "1liveDiggi",
-    "kVxWJAElj0IliGqSKdof",
-    "1LIVE DIGGI playlist"
-  );
+  try {
+    /* Scrape from 1LIVE DIGGI */
+    await scrapePlaylist(
+      spotifyApiToken,
+      fetchFromDay,
+      fetchFromHour,
+      "1liveDiggi",
+      "kVxWJAElj0IliGqSKdof",
+      "1LIVE DIGGI playlist"
+    );
+  } catch (err) {
+    logger.error(
+      "Unexpected Error occurred at 1LIVE DIGGI playlist scrape: " + err
+    );
+  }
 
   return;
 });
