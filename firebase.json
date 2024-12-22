@@ -14,7 +14,7 @@
         "yarn --cwd \"$RESOURCE_DIR\" run lint",
         "yarn --cwd \"$RESOURCE_DIR\" run build"
       ],
-      "runtime": "nodejs20"
+      "runtime": "nodejs22"
     }
   ],
   "hosting": [{
