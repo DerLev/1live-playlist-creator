@@ -225,7 +225,7 @@ export type GetTrack = {
 export type GetCurrentUserProfile = {
   country: string
   display_name: string
-  email: string
+  email?: string
   explicit_content: {
     filter_enabled: boolean
     filter_locked: boolean
@@ -240,7 +240,7 @@ export type GetCurrentUserProfile = {
   href: string
   id: string
   images: ImageObject[]
-  product: "premium" | "free" | "open"
+  product?: "premium" | "free" | "open"
   type: "user"
   uri: string
 }

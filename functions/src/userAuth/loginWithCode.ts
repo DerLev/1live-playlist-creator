@@ -152,8 +152,6 @@ export const loginWithCode = onCall(
       await auth.createUser({
         disabled: false,
         displayName: userProfileResult.display_name,
-        email: userProfileResult.email,
-        emailVerified: true,
         uid: userProfileResult.id,
         photoURL: userPhoto.url || undefined,
       });
