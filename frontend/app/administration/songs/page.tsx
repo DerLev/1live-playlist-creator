@@ -144,10 +144,15 @@ const SongsPage = () => {
               mb="md"
             />
             <Group gap="xs" style={{ rowGap: 0 }}>
-              <Text size='xl' fw={700}>{songsArray[modalSongIndex].title}</Text>
-              {songsArray[modalSongIndex].explicit && (
-                <Badge radius="sm" color='gray'>Explicit</Badge>
-              ) || null}
+              <Text size="xl" fw={700}>
+                {songsArray[modalSongIndex].title}
+              </Text>
+              {(songsArray[modalSongIndex].explicit && (
+                <Badge radius="sm" color="gray">
+                  Explicit
+                </Badge>
+              )) ||
+                null}
             </Group>
             <Text c="dimmed" mb="md">
               {songsArray[modalSongIndex].artists
@@ -169,19 +174,24 @@ const SongsPage = () => {
                 .toDate()
                 .toLocaleDateString()}
             </Text>
-            <Text>
-              Spotify Track URI:
-            </Text>
+            <Text>Spotify Track URI:</Text>
             <Group gap={0} mb="md">
               <Code>{songsArray[modalSongIndex].spotifyTrackUri}</Code>
-              <ActionIcon size="sm" color='gray' variant='transparent' onClick={() => navigator.clipboard.writeText(songsArray[modalSongIndex].spotifyTrackUri)}>
+              <ActionIcon
+                size="sm"
+                color="gray"
+                variant="transparent"
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    songsArray[modalSongIndex].spotifyTrackUri,
+                  )
+                }
+              >
                 <HiOutlineClipboard />
               </ActionIcon>
             </Group>
             <Text>Search String:</Text>
-            <Code mb="md">
-              {songsArray[modalSongIndex].searchString}
-            </Code>
+            <Code mb="md">{songsArray[modalSongIndex].searchString}</Code>
             <Button
               fullWidth
               radius="md"
@@ -249,11 +259,15 @@ const SongsPage = () => {
                     <Stack gap={0}>
                       <Text size="sm">
                         {song.title}
-                        {song.explicit && (
+                        {(song.explicit && (
                           <>
-                            {' '}<ThemeIcon variant='filled' size="xs" color='gray'>E</ThemeIcon>
+                            {' '}
+                            <ThemeIcon variant="filled" size="xs" color="gray">
+                              E
+                            </ThemeIcon>
                           </>
-                        ) || null}
+                        )) ||
+                          null}
                       </Text>
                       <Text c="dimmed" size="sm">
                         {song.artists.map((artist) => artist.name).join(', ')}
