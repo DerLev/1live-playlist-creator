@@ -11,6 +11,7 @@ import {
   HiOutlineArrowLeftOnRectangle,
   HiOutlineArrowRightOnRectangle,
   HiOutlineChevronRight,
+  HiOutlineCog,
   HiOutlineHomeModern,
   HiOutlineUserCircle,
 } from 'react-icons/hi2'
@@ -18,7 +19,10 @@ import {
 const AppShellNavbar = () => {
   const pathname = usePathname()
 
-  const { signedIn, user } = useLoginStatus()
+  const { signedIn, user, hasRequiredClaims } = useLoginStatus({
+    requiredClaims: { isAdmin: true },
+    behavior: 'both',
+  })
 
   return (
     <MAppShellNavbar p="xs">
@@ -30,6 +34,16 @@ const AppShellNavbar = () => {
           leftSection={<HiOutlineHomeModern />}
           active={pathname === '/'}
         />
+        {(signedIn && hasRequiredClaims && (
+          <NavLink
+            label="Administration"
+            leftSection={<HiOutlineCog />}
+            component={Link}
+            href="/administration"
+            active={pathname.startsWith('/administration')}
+          />
+        )) ||
+          null}
         {signedIn ? (
           <NavLink
             label={user.displayName}
