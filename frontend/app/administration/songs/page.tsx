@@ -38,6 +38,7 @@ import {
 } from 'react-icons/hi2'
 import { useFirestore } from 'reactfire'
 import { useForm } from '@mantine/form'
+import Link from 'next/link'
 
 type SongsCollectionResolved = Omit<SongsCollection, 'artists'> & {
   artists: ArtistsCollection[]
@@ -287,10 +288,9 @@ const SongsPage = () => {
                       size="compact-sm"
                       leftSection={<HiOutlineArrowPathRoundedSquare />}
                       variant="light"
-                      // component={Link}
-                      // href={'/administration/songs/replace?id=' + song.docId}
-                      // onClick={(e) => e.stopPropagation()}
-                      disabled
+                      component={Link}
+                      href={'/administration/songs/replace?id=' + song.docId}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Replace
                     </Button>
