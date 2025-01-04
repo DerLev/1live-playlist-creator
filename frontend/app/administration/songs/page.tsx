@@ -6,6 +6,7 @@ import { ArtistsCollection } from '@/types/firestore/ArtistsCollection'
 import { SongsCollection } from '@/types/firestore/SongsCollection'
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
   Code,
@@ -17,7 +18,7 @@ import {
   Table,
   Text,
   TextInput,
-  Title,
+  ThemeIcon,
 } from '@mantine/core'
 import {
   collection,
@@ -32,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { FaSpotify } from 'react-icons/fa'
 import {
   HiOutlineArrowPathRoundedSquare,
+  HiOutlineClipboard,
   HiOutlineMagnifyingGlass,
 } from 'react-icons/hi2'
 import { useFirestore } from 'reactfire'
@@ -141,7 +143,12 @@ const SongsPage = () => {
               radius="md"
               mb="md"
             />
-            <Title>{songsArray[modalSongIndex].title}</Title>
+            <Group gap="xs" style={{ rowGap: 0 }}>
+              <Text size='xl' fw={700}>{songsArray[modalSongIndex].title}</Text>
+              {songsArray[modalSongIndex].explicit && (
+                <Badge radius="sm" color='gray'>Explicit</Badge>
+              ) || null}
+            </Group>
             <Text c="dimmed" mb="md">
               {songsArray[modalSongIndex].artists
                 .map((artist) => artist.name)
@@ -156,13 +163,23 @@ const SongsPage = () => {
                 .toDate()
                 .toLocaleDateString()}
             </Text>
-            <Text mb="lg">
+            <Text mb="md">
               First Seen:{' '}
               {songsArray[modalSongIndex].firstSeen
                 .toDate()
                 .toLocaleDateString()}
             </Text>
-            <Code block mb="md">
+            <Text>
+              Spotify Track URI:
+            </Text>
+            <Group gap={0} mb="md">
+              <Code>{songsArray[modalSongIndex].spotifyTrackUri}</Code>
+              <ActionIcon size="sm" color='gray' variant='transparent' onClick={() => navigator.clipboard.writeText(songsArray[modalSongIndex].spotifyTrackUri)}>
+                <HiOutlineClipboard />
+              </ActionIcon>
+            </Group>
+            <Text>Search String:</Text>
+            <Code mb="md">
               {songsArray[modalSongIndex].searchString}
             </Code>
             <Button
@@ -230,7 +247,14 @@ const SongsPage = () => {
                       radius="md"
                     />
                     <Stack gap={0}>
-                      <Text size="sm">{song.title}</Text>
+                      <Text size="sm">
+                        {song.title}
+                        {song.explicit && (
+                          <>
+                            {' '}<ThemeIcon variant='filled' size="xs" color='gray'>E</ThemeIcon>
+                          </>
+                        ) || null}
+                      </Text>
                       <Text c="dimmed" size="sm">
                         {song.artists.map((artist) => artist.name).join(', ')}
                       </Text>
