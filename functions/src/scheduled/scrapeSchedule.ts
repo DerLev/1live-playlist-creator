@@ -86,16 +86,16 @@ const scrapePlaylist = async (
 };
 
 /* NOTE: Scheduler triggers on UTC time */
-export const scrapeSchedule = onSchedule("0 5-19 * * *", async () => {
+export const scrapeSchedule = onSchedule("0 4-21 * * *", async () => {
   /* Evaluate whether the function should trigger */
   /* NOTE: needed for TZ's daylight savings time */
   const centralEuropeOffset = getTimezoneOffset("Europe/Berlin", new Date());
   const currentDateTime = new Date(Date.now() + centralEuropeOffset);
   if (
-    !(7 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 19)
+    !(6 <= currentDateTime.getHours()) || !(currentDateTime.getHours() <= 21)
   ) return;
 
-  /* If CET/CEST is between 7:00 and 19:00 continue */
+  /* If CET/CEST is between 6:00 and 21:00 continue */
   const spotifyApiToken = await getClientToken();
 
   const fetchFromHour = currentDateTime.getHours() - 1;
