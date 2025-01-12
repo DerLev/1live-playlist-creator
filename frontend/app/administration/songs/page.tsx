@@ -9,6 +9,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Code,
   Flex,
   Group,
@@ -62,6 +63,7 @@ const SongsPage = () => {
   const [prevSearchQueryFilter, setPrevSearchQueryFilter] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalSongIndex, setModalSongIndex] = useState(0)
+  const [showSearchStrings, setShowSearchStrings] = useState(false)
 
   const searchQueryFilterFront = searchQueryFilter.slice(
     0,
@@ -211,23 +213,31 @@ const SongsPage = () => {
         </Modal>
       )) ||
         null}
-      <form
-        onSubmit={searchForm.onSubmit((v) => setSearchQueryFilter(v.search))}
-      >
-        <Flex justify="center" align="center" gap="xs" mb="md">
-          <TextInput
-            radius="xl"
-            leftSection={<HiOutlineMagnifyingGlass />}
-            leftSectionPointerEvents="none"
-            placeholder="Search against search strings"
-            w={240}
-            {...searchForm.getInputProps('search')}
-          ></TextInput>
-          <Button radius="xl" variant="default" type="submit">
-            Search
-          </Button>
-        </Flex>
-      </form>
+      <Group justify="center" mb="md">
+        <form
+          onSubmit={searchForm.onSubmit((v) => setSearchQueryFilter(v.search))}
+        >
+          <Flex justify="center" align="center" gap="xs">
+            <TextInput
+              radius="xl"
+              leftSection={<HiOutlineMagnifyingGlass />}
+              leftSectionPointerEvents="none"
+              placeholder="Search against search strings"
+              w={240}
+              {...searchForm.getInputProps('search')}
+            ></TextInput>
+            <Button radius="xl" variant="default" type="submit">
+              Search
+            </Button>
+          </Flex>
+        </form>
+        <Checkbox
+          label="Show Search Strings"
+          disabled={!!searchQueryFilter.length}
+          checked={showSearchStrings || !!searchQueryFilter.length}
+          onChange={() => setShowSearchStrings((v) => !v)}
+        />
+      </Group>
       <Table stickyHeader stickyHeaderOffset={60} highlightOnHover>
         <Table.Thead>
           <Table.Tr>
@@ -273,7 +283,7 @@ const SongsPage = () => {
                       <Text c="dimmed" size="sm">
                         {song.artists.map((artist) => artist.name).join(', ')}
                       </Text>
-                      {(searchQueryFilter.length && (
+                      {((searchQueryFilter.length || showSearchStrings) && (
                         <Code block>{song.searchString}</Code>
                       )) ||
                         null}
