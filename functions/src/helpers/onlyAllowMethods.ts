@@ -26,6 +26,7 @@ const onlyAllowMethods = (
   });
 
   /* Set CORS for entirety of function call */
+  res.setHeader("Access-Control-Allow-Methods", header);
   const origin = req.headers.origin;
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
