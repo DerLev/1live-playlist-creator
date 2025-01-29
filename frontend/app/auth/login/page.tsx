@@ -2,7 +2,7 @@
 
 import useLoginStatus from '@/lib/useLoginStatus'
 import { CreateRedirectInput, CreateRedirectOutput } from '@/types/functions'
-import { Button, Container, Paper, Stack, Text } from '@mantine/core'
+import { Button, Container, Card, Stack, Text } from '@mantine/core'
 import { httpsCallable } from 'firebase/functions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -37,7 +37,7 @@ const LoginPage = () => {
 
   return (
     <Container maw={420} w={'100%'}>
-      <Paper withBorder p="xl" radius="md">
+      <Card radius="md" padding="lg" shadow="sm">
         <Text size="lg" fw={500}>
           Welcome, login with
         </Text>
@@ -53,7 +53,7 @@ const LoginPage = () => {
             Login with Spotify
           </Button>
         </Stack>
-      </Paper>
+      </Card>
     </Container>
   )
 }
