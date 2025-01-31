@@ -6,6 +6,7 @@ import { ArtistsCollection } from '@/types/firestore/ArtistsCollection'
 import { SongsCollection } from '@/types/firestore/SongsCollection'
 import {
   ActionIcon,
+  Anchor,
   Badge,
   Box,
   Button,
@@ -23,11 +24,14 @@ import {
 } from '@mantine/core'
 import {
   collection,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
   orderBy,
   query,
+  QueryDocumentSnapshot,
+  startAfter,
   where,
 } from 'firebase/firestore'
 import { useCallback, useEffect, useState } from 'react'
@@ -46,6 +50,8 @@ type SongsCollectionResolved = Omit<SongsCollection, 'artists'> & {
   docId: string
 }
 
+const PAGE_SIZE = 30
+
 const SongsPage = () => {
   const firestore = useFirestore()
   const songsCollection = collection(firestore, 'songs').withConverter(
@@ -54,16 +60,20 @@ const SongsPage = () => {
   const songsQuery = query(
     songsCollection,
     orderBy('firstSeen', 'desc'),
-    limit(30),
+    limit(PAGE_SIZE),
   )
 
-  const [songsFetched, setSongsFetched] = useState(false)
+  const [initialFetch, setInitialFetch] = useState(false)
   const [songsArray, setSongsArray] = useState<SongsCollectionResolved[]>([])
   const [searchQueryFilter, setSearchQueryFilter] = useState('')
   const [prevSearchQueryFilter, setPrevSearchQueryFilter] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalSongIndex, setModalSongIndex] = useState(0)
   const [showSearchStrings, setShowSearchStrings] = useState(false)
+  const [totalSongsCount, setTotalSongsCount] = useState(0)
+  const [querySongsCount, setQuerySongsCount] = useState(0)
+  const [lastDocSnapshot, setLastDocSnapshot] =
+    useState<QueryDocumentSnapshot<SongsCollection>>()
 
   const searchQueryFilterFront = searchQueryFilter.slice(
     0,
@@ -82,43 +92,78 @@ const SongsPage = () => {
     where('searchString', '>=', searchQueryFilter),
     where('searchString', '<', searchQueryFilterWithModifiedEnd),
     orderBy('firstSeen', 'desc'),
-    limit(30),
   )
 
-  const fetchSongs = useCallback(async () => {
-    setSongsFetched(true)
-    const finalQuery = searchQueryFilter.length ? songsSearchQuery : songsQuery
-    const queryResult = await getDocs(finalQuery)
-    const queryResultWithResolvedArtistsPromises = queryResult.docs.map(
-      async (doc) => {
-        const docData = doc.data()
+  /**
+   * Fetches the next page of songs
+   * @param {Boolean} [refetch=false] Replace the current array of songs
+   * @returns {Promise<void>}
+   */
+  const fetchSongs = useCallback(
+    async (refetch = false) => {
+      const finalQuery = searchQueryFilter.length
+        ? query(songsSearchQuery, limit(PAGE_SIZE))
+        : songsQuery
+      const queryResult = await getDocs(
+        refetch ? finalQuery : query(finalQuery, startAfter(lastDocSnapshot)),
+      )
+      const queryResultWithResolvedArtistsPromises = queryResult.docs.map(
+        async (doc, index) => {
+          if (index === queryResult.docs.length - 1) {
+            setLastDocSnapshot(doc)
+          }
 
-        const newArtists = (
-          await Promise.all(
-            docData.artists.map(async (artist) => {
-              return (await getDoc(artist)).data()
-            }),
-          )
-        ).filter((element) => element !== undefined)
+          const docData = doc.data()
 
-        return { ...docData, artists: newArtists, docId: doc.id }
-      },
-    )
-    const queryResultWithResolvedArtists = await Promise.all(
-      queryResultWithResolvedArtistsPromises,
-    )
-    setSongsArray(queryResultWithResolvedArtists)
-  }, [songsQuery, songsSearchQuery, searchQueryFilter.length])
+          const newArtists = (
+            await Promise.all(
+              docData.artists.map(async (artist) => {
+                return (await getDoc(artist)).data()
+              }),
+            )
+          ).filter((element) => element !== undefined)
+
+          return { ...docData, artists: newArtists, docId: doc.id }
+        },
+      )
+      const queryResultWithResolvedArtists = await Promise.all(
+        queryResultWithResolvedArtistsPromises,
+      )
+      if (searchQueryFilter.length) {
+        const queryCount = await getCountFromServer(songsSearchQuery)
+        setQuerySongsCount(queryCount.data().count)
+      }
+      if (refetch) {
+        setSongsArray(queryResultWithResolvedArtists)
+      } else {
+        setSongsArray((arr) => [...arr, ...queryResultWithResolvedArtists])
+      }
+    },
+    [songsQuery, songsSearchQuery, searchQueryFilter.length, lastDocSnapshot],
+  )
+
+  /**
+   * Gets the count of all songs in the database
+   * @returns {Promise<void>}
+   */
+  const countSongs = useCallback(async () => {
+    const count = await getCountFromServer(songsCollection)
+    setTotalSongsCount(count.data().count)
+  }, [songsCollection])
 
   useEffect(() => {
-    if (!songsFetched) fetchSongs()
-  }, [fetchSongs, songsFetched])
+    if (!initialFetch) {
+      setInitialFetch(true)
+      fetchSongs(true)
+      countSongs()
+    }
+  }, [fetchSongs, initialFetch, countSongs])
 
   useEffect(() => {
     if (prevSearchQueryFilter !== searchQueryFilter.length) {
       setModalSongIndex(0)
       setPrevSearchQueryFilter(searchQueryFilter.length)
-      fetchSongs()
+      fetchSongs(true)
     }
   }, [fetchSongs, prevSearchQueryFilter, searchQueryFilter.length])
 
@@ -331,7 +376,17 @@ const SongsPage = () => {
         </Text>
       )) ||
         null}
-      {/* <Text ta="center" mt="md" c="dimmed" fs="italic">Loading more...</Text> */}
+      <Group mt="md" justify="center" gap="lg">
+        <Text c="dimmed" fs="italic">
+          Showing {songsArray.length} of{' '}
+          {searchQueryFilter.length ? querySongsCount : totalSongsCount} Songs
+        </Text>
+        {!(songsArray.length % PAGE_SIZE) && songsArray.length && (
+          <Anchor component="button" fs="italic" onClick={() => fetchSongs()}>
+            Load more
+          </Anchor>
+        )}
+      </Group>
     </Box>
   )
 }
