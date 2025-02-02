@@ -1,7 +1,6 @@
 'use client'
 
 import firestoreConverter from '@/lib/firestoreConverter'
-import msToTime from '@/lib/msToTime'
 import { ArtistsCollection } from '@/types/firestore/ArtistsCollection'
 import { SongsCollection } from '@/types/firestore/SongsCollection'
 import {
@@ -44,6 +43,7 @@ import {
 import { useFirestore } from 'reactfire'
 import { useForm } from '@mantine/form'
 import Link from 'next/link'
+import { numberFormatter, msToTime } from '@/lib/formatters'
 
 type SongsCollectionResolved = Omit<SongsCollection, 'artists'> & {
   artists: ArtistsCollection[]
@@ -378,8 +378,11 @@ const SongsPage = () => {
         null}
       <Group mt="md" justify="center" gap="lg">
         <Text c="dimmed" fs="italic">
-          Showing {songsArray.length} of{' '}
-          {searchQueryFilter.length ? querySongsCount : totalSongsCount} Songs
+          Showing {numberFormatter(songsArray.length)} of{' '}
+          {numberFormatter(
+            searchQueryFilter.length ? querySongsCount : totalSongsCount,
+          )}{' '}
+          Songs
         </Text>
         {!(songsArray.length % PAGE_SIZE) && songsArray.length && (
           <Anchor component="button" fs="italic" onClick={() => fetchSongs()}>
