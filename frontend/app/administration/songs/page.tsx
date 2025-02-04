@@ -87,12 +87,32 @@ const SongsPage = () => {
     searchQueryFilterFront +
     String.fromCharCode(searchQueryFilterBack.charCodeAt(0) + 1)
 
-  const songsSearchQuery = query(
-    songsCollection,
-    where('searchString', '>=', searchQueryFilter),
-    where('searchString', '<', searchQueryFilterWithModifiedEnd),
-    orderBy('firstSeen', 'desc'),
-  )
+  const spotifyUriRegex =
+    /((https:\/\/open\.spotify\.com\/track\/)|(spotify:track:))[\w\d]{22}(\/)?/
+  const searchQueryMatchesSpotifyUri = searchQueryFilter.match(spotifyUriRegex)
+
+  const songsSearchQuery = searchQueryMatchesSpotifyUri
+    ? query(
+        songsCollection,
+        where(
+          'spotifyTrackUri',
+          '==',
+          'spotify:track:' +
+            searchQueryMatchesSpotifyUri[0]
+              .trim()
+              .replace(
+                /((https:\/\/open\.spotify\.com\/track\/)|(spotify:track:)|())(\/)?/g,
+                '',
+              ),
+        ),
+        orderBy('firstSeen', 'desc'),
+      )
+    : query(
+        songsCollection,
+        where('searchString', '>=', searchQueryFilter),
+        where('searchString', '<', searchQueryFilterWithModifiedEnd),
+        orderBy('firstSeen', 'desc'),
+      )
 
   /**
    * Fetches the next page of songs
@@ -267,7 +287,7 @@ const SongsPage = () => {
               radius="xl"
               leftSection={<HiOutlineMagnifyingGlass />}
               leftSectionPointerEvents="none"
-              placeholder="Search against search strings"
+              placeholder="Search songs"
               w={240}
               {...searchForm.getInputProps('search')}
             ></TextInput>
