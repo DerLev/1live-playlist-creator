@@ -30,8 +30,8 @@ export const listAllPlaylistTracks = async (
   if ("error" in firstGetResult) {
     throw new HttpsError(
       "internal",
-      "Spotify API errored: " + firstGetResult.error.status + ": " +
-      firstGetResult.error.message
+      "Spotify API errored when trying to fetch playlist: " +
+      firstGetResult.error.status + ": " + firstGetResult.error.message
     );
   }
 
@@ -66,8 +66,8 @@ export const listAllPlaylistTracks = async (
       if ("error" in result) {
         throw new HttpsError(
           "internal",
-          "Spotify API errored: " + result.error.status + ": " +
-          result.error.message
+          "Spotify API errored when trying to fetch songs from playlist: " +
+          result.error.status + ": " + result.error.message
         );
       }
 
@@ -131,8 +131,8 @@ export const removeTracksFromPlaylist = async (
     if ("error" in result) {
       throw new HttpsError(
         "internal",
-        "Spotify API errored: " + result.error.status + ": " +
-        result.error.message
+        "Spotify API errored when trying to remove songs from playlist: " +
+        result.error.status + ": " + result.error.message
       );
     }
 
@@ -183,8 +183,8 @@ export const addTracksToPlaylist = async (
       const apiError = await result.json() as SpotifyError;
       throw new HttpsError(
         "internal",
-        "Spotify API errored: " + apiError.error.status + ": " +
-        apiError.error.message
+        "Spotify API errored when trying to add tracks to playlist: " +
+        apiError.error.status + ": " + apiError.error.message
       );
     }
 
