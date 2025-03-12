@@ -81,8 +81,9 @@ export const scrapeNewReleasesProgramm = onSchedule("0 12 * * 1", async () => {
   await removeTracksFromPlaylist(
     spotifyApiToken,
     playlistIdsDoc.newReleases,
-    currentTracks.trackUris,
-    currentTracks.snapshot_id
+    currentTracks.trackUris
+    /* API does some weirdness with this enabled */
+    // currentTracks.snapshot_id
   );
 
   const spotifyApiInput = playlistTracks.map((track) => track.spotifyTrackUri);
